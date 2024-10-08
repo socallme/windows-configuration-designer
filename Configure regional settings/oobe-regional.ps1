@@ -1,5 +1,5 @@
 # configure time zone
-Get-TimeZone -ListAvailable | ?{$_.DisplayName -like "*Australia*"} | Set-TimeZone
+Get-TimeZone -ListAvailable | ?{$_.DisplayName -like "*AUS*"} | Set-TimeZone
 
 # configure regional/locale/keyboard settings
 # Hungarian
