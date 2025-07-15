@@ -1,8 +1,14 @@
-# Execute oobe scripts
-. .\oobe-chocolatey.ps1
-. .\oobe-associations.ps1
+# Create local admin account
+$local_user = @{
+    Name       = 'User'
+    NoPassword = $true
+}
 
-# Prepare provisioning folder
+$user = New-LocalUser @local_user 
+$user | Set-LocalUser -PasswordNeverExpires $true 
+$user | Add-LocalGroupMember -Group "Administrators"
+
+# Create C:\ProgramData\provisioning directory
 $provisioning = ni "$($env:ProgramData)\provisioning" -ItemType Directory -Force
 
 # Move files from provisioning package to provisioning folder
@@ -10,24 +16,13 @@ gci -File | ? { $_.Name -notlike "oobe-*" } | % {
     cp $_.FullName "$($provisioning.FullName)\$($_.Name)" -Force
 }
 
-# Create local admin account
-$local_user = @{
-    Name                 = 'admin'
-    NoPassword           = $true
-}
-
-$user = New-LocalUser @local_user 
-$user | Set-LocalUser -PasswordNeverExpires $true 
-$user | Add-LocalGroupMember -Group "Administrators"
-
-# Skip privacy experiance
 $settings =
-[PSCustomObject]@{
+[PSCustomObject]@{ # Execute desktop-provisioning.ps1
     Path  = "SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
     Name  = "execute_provisioning"
     Value = "cmd /c powershell.exe -ExecutionPolicy Bypass -File {0}\desktop-provisioning.ps1" -f $provisioning.FullName
 },
-[PSCustomObject]@{
+[PSCustomObject]@{ # Disable privacy experiance
     Path  = "SOFTWARE\Policies\Microsoft\Windows\OOBE"
     Name  = "DisablePrivacyExperience"
     Value = 1
